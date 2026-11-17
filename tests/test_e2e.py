@@ -1,5 +1,5 @@
 def test_all_module_pages(client):
-    for path in ['/manifest', '/paths', '/objects', '/partitions', '/reconcile', '/runs']:
+    for path in ['/manifest', '/paths', '/objects', '/partitions', '/reconcile', '/runs', '/merges']:
         response = client.get(path)
         assert response.status_code == 200
         assert "panel" in response.text

@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block content %}
+<div class="grid module-7"><section class="panel panel--primary"><div class="panel__head"><h2>当前与封账差异</h2><span class="panel__meta">M7 · {{ data.status|default('READY') }} · v{{ data.version|default(0) }}</span></div><div class="panel__body panel__body--scroll"><table class="ledger"><thead><tr><th>分区</th><th>当前数量</th><th>封账数量</th><th>未封账</th></tr></thead><tbody>{% for row in data.partitions %}<tr><td>{{ row.partition }}</td><td class="num">{{ row.current }}</td><td class="num">{{ row.sealed }}</td><td class="num">{{ row.unsealed }}</td></tr>{% else %}<tr><td colspan="4">暂无归属，先接入现存对象</td></tr>{% endfor %}</tbody></table><p class="panel__meta">总量 {{ data.current_total }} ＝ 封账 {{ data.sealed_total }} ＋ 未封账 {{ data.unsealed_total }}（合并与撤销只迁移归属，总量守恒）</p></div></section>
+<div class="stack"><section class="panel"><div class="panel__head"><h2>本次动作</h2><span class="panel__meta">/api/merges</span></div><div class="panel__body"><p class="panel__meta">封账归属保留原小时；未封账项转入目标日分区并注销原归属。</p><button class="btn btn--primary" id="m7-merge">运行 样例合并</button><pre class="result" id="m7-out">等待运行</pre></div></section><section class="panel"><div class="panel__head"><h2>合并单</h2><span class="panel__meta">/api/merges/list</span></div><div class="panel__body"><button class="btn" id="m7-list">回读合并进度与清单</button><pre class="result" id="m7-list-out">等待运行</pre></div></section></div></div>
+<script>
+const post=async(url,body)=>{const res=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});const text=await res.text();try{return JSON.parse(text)}catch{return text}};
+const get=async(url)=>{const res=await fetch(url);return res.json()};
+document.querySelector("#m7-merge").addEventListener("click",async()=>{
+  const out=document.querySelector("#m7-out");out.textContent="运行中";
+  const diff=await get("/api/merges/diff");
+  const body=Object.assign({{ data.sample_merge|tojson }},{expected_version:diff.version});
+  out.textContent=JSON.stringify(await post("/api/merges",body),null,2);
+});
+document.querySelector("#m7-list").addEventListener("click",async()=>{
+  document.querySelector("#m7-list-out").textContent=
+    JSON.stringify(await get("/api/merges/list"),null,2);
+});
+</script>
+{% endblock %}
